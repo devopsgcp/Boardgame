@@ -1,29 +1,33 @@
 pipeline {
     agent any
-	tools {
-	  maven : maven3
-	  jdk : jdk17
-	}
+
+    tools {
+        maven 'maven3'
+        jdk 'jdk17'
+    }
+
     stages {
-        stage('clone repo') {
+        stage('Clone Repo') {
             steps {
                 git branch: 'main', url: 'https://github.com/devopsgcp/Boardgame.git'
             }
         }
-		
-		stage('compile') {
+
+        stage('Compile') {
             steps {
-               sh 'mvn compile'
+                sh 'mvn compile'
             }
         }
-		stage('test') {
+
+        stage('Test') {
             steps {
-               sh 'mvn test'
+                sh 'mvn test'
             }
         }
-		stage('package') {
+
+        stage('Package') {
             steps {
-               sh 'mvn package'
+                sh 'mvn package'
             }
         }
     }
