@@ -16,7 +16,11 @@ pipeline {
         }
 
         stage ('git compile') {
-            sh 'mvn compile'
+            steps {
+                sh 'mvn compile'
+
+            }
+            
         }
     }
 
