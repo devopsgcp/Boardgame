@@ -22,6 +22,13 @@ pipeline {
             }
             
         }
+
+        stage ('git package') {
+            steps {
+                sh 'mvn package'
+            }
+
+        }
     }
 
 
