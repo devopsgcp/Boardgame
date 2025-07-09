@@ -1,0 +1,3 @@
+Holds config files, templates, YAMLs, JSONs, etc.
+
+Use libraryResource to load files from here.

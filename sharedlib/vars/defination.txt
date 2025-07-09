@@ -1,0 +1,5 @@
+Contains Groovy scripts (no class declarations) that can be directly called in the Jenkinsfile.
+
+Each .groovy file acts like a function.
+
+Must define a call() method.
