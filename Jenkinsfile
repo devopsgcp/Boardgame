@@ -6,6 +6,10 @@ pipeline {
         jdk 'jdk17'
     }
 
+    environment {
+        SCANNER_HOME = tool 'sonar-scanner'   //   'sonar-scanner'  this is toll name which we have configured in tool section in Jenkins
+    }
+
     stages {
         stage('Clone Repo') {
             steps {
@@ -30,5 +34,49 @@ pipeline {
                 sh 'mvn package'
             }
         }
+
+        stage('Trivy Scan') {
+            steps {
+                sh 'trivy fs --severity HIGH,CRITICAL --format json -o trivy-scan-report.json .'
+            }
+        }
+
+        stage('OS Dependency Check') {
+            steps {
+                dependencyCheck additionalArguments: '--scan .', odcInstallation: 'DD'
+                dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('sonar-server') {
+                    sh '''
+                        $SCANNER_HOME/bin/sonar-scanner \
+                        -Dsonar.projectKey=Boardgame \
+                        -Dsonar.projectName=Boardgame \
+                        -Dsonar.sources=. \
+                        -Dsonar.java.binaries=target
+                    '''
+                }
+            }
+        }
+
+        stage('Quality Gate Check') {
+            steps {
+                timeout(time: 1, unit: 'HOURS') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+
+      stage('Nexus_push') {
+        steps {
+          withMaven(globalMavenSettingsConfig: 'cicd-nexus', jdk: 'jdk17', maven: 'maven3', mavenSettingsConfig: '', traceability: true) {
+             sh 'mvn deploy'
     }
+  }
+}
+
+}
 }
