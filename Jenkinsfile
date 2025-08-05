@@ -10,7 +10,7 @@ pipeline {
         PROJECT_ID = 'cicd-2024 '
         CLUSTER_NAME = 'boardgame'
         CLUSTER_REGION = 'asia-south2 ' // e.g. us-central1
-        GOOGLE_CREDENTIALS = credentials('custom-service-account')
+        GOOGLE_CREDENTIALS = credentials('gke-service-account')
         REPOSITORY = 'boardgame '
         IMAGE_NAME = 'boardgame'
         IMAGE_TAG = 'latest'
