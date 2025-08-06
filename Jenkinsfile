@@ -6,14 +6,14 @@ pipeline {
     }
 
     environment {
-        SCANNER_HOME = tool 'sonar-scanner' // 'sonar-scanner' is a tool configured in Jenkins
+        SCANNER_HOME = tool 'sonar-scanner' // 'sonar-scanner' configured as a tool
         PROJECT_ID = 'cicd-2024'
-        CLUSTER_NAME = 'boardgame'
-        CLUSTER_REGION = 'asia-south2' // e.g. us-central1
-        REPOSITORY = 'boardgame'
+        REGION = 'asia-south2'
+        REPO_NAME = 'boardgame'
         IMAGE_NAME = 'boardgame'
         IMAGE_TAG = 'latest'
-        FULL_IMAGE = "asia-south2-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/${IMAGE_NAME}:${IMAGE_TAG}"
+        ARTIFACT_REGISTRY = "${REGION}-docker.pkg.dev"
+        FULL_IMAGE = "${ARTIFACT_REGISTRY}/${PROJECT_ID}/${REPO_NAME}/${IMAGE_NAME}:${IMAGE_TAG}"
     }
 
     stages {
@@ -43,7 +43,7 @@ pipeline {
 
         stage('OS Dependency Check') {
             steps {
-                dependencyCheck additionalArguments: '--scan .', odcInstallation: 'DD'
+                dependencyCheck additionalArguments: '--scan .', odcInstallation: 'DC'
                 dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
             }
         }
@@ -78,13 +78,14 @@ pipeline {
             }
         }
 
-        stage('Authenticate with GCP') {
+        stage('Set up GCP Auth') {
             steps {
-                withCredentials([file(credentialsId: 'gke-service-account', variable: 'GOOGLE_CREDENTIALS')]) {
+                withCredentials([file(credentialsId: 'gcp-sa-key', variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
                     sh '''
-                        gcloud auth activate-service-account --key-file=$GOOGLE_CREDENTIALS
-                        gcloud config set project cicd-2024
-                        gcloud container clusters get-credentials boardgame --region asia-south2
+                        echo "Activating service account..."
+                        gcloud auth activate-service-account --key-file=$GOOGLE_APPLICATION_CREDENTIALS
+                        gcloud config set project $PROJECT_ID
+                        gcloud auth configure-docker $ARTIFACT_REGISTRY --quiet
                     '''
                 }
             }
@@ -92,31 +93,18 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh "docker build -t ${FULL_IMAGE} ."
+                sh '''
+                    docker build -t $ARTIFACT_REGISTRY/$PROJECT_ID/$REPO_NAME/$IMAGE_NAME:$IMAGE_TAG .
+                '''
             }
         }
 
         stage('Push to Artifact Registry') {
             steps {
-                sh "docker push ${FULL_IMAGE}"
-            }
-        }
-
-        /*
-        stage('Deploy to GKE') {
-            steps {
                 sh '''
-                    kubectl apply -f k8s/deployment.yaml
-                    kubectl apply -f k8s/service.yaml
+                    docker push $ARTIFACT_REGISTRY/$PROJECT_ID/$REPO_NAME/$IMAGE_NAME:$IMAGE_TAG
                 '''
             }
-        }
-        */
-    }
-
-    post {
-        always {
-            sh 'rm -f gcp-key.json || true'
         }
     }
 }
