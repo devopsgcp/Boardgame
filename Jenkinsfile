@@ -70,12 +70,16 @@ pipeline {
             }
         }
 
-        stage('Nexus_push') {
+        
+
+        stage ('push_to_nexus') {
             steps {
-                withMaven(globalMavenSettingsConfig: 'cicd-nexus', jdk: 'jdk17', maven: 'maven3', mavenSettingsConfig: '', traceability: true) {
-                    sh 'mvn deploy'
+                withMaven(globalMavenSettingsConfig: '', jdk: 'jdk17', maven: 'maven3', mavenSettingsConfig: 'cicd-template', traceability: true) {
+                     sh 'mvn deploy'
+    
                 }
             }
+
         }
 
         stage('Set up GCP Auth') {
