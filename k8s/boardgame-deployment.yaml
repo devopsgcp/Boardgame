@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: boardgame-deployment
+  labels:
+    app: boardgame
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: boardgame
+  template:
+    metadata:
+      labels:
+        app: boardgame
+    spec:
+      containers:
+      - name: boardgame
+        image: asia-south2-docker.pkg.dev/cicd-2024/boardgame/boardgame:latest
+        ports:
+        - containerPort: 8080 # change this if your app uses a different port

@@ -117,5 +117,23 @@ pipeline {
                 '''
             }
         }
+
+        stage('Deploy to GKE') {
+            steps {
+                withCredentials([file(credentialsId: 'gcp-sa-key', variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
+                    sh '''
+                        echo "Authenticating to GKE..."
+                        gcloud auth activate-service-account --key-file=$GOOGLE_APPLICATION_CREDENTIALS
+                        gcloud config set project $PROJECT_ID
+                        gcloud container clusters get-credentials boardgame --region=$REGION --project=$PROJECT_ID
+
+                        echo "Deploying to GKE..."
+                        kubectl apply -f k8s/boardgame-deployment.yaml
+                        kubectl apply -f k8s/boardgame-service.yaml
+                    '''
+                }
+            }
+        }
+
     }
 }
