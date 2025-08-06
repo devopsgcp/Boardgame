@@ -70,8 +70,6 @@ pipeline {
             }
         }
 
-        
-
         stage ('push_to_nexus') {
             steps {
                 withMaven(globalMavenSettingsConfig: '', jdk: 'jdk17', maven: 'maven3', mavenSettingsConfig: 'cicd-template', traceability: true) {
@@ -102,6 +100,15 @@ pipeline {
                 '''
             }
         }
+        stage('Trivy Scan (Docker Image)') {
+          steps {
+            sh '''
+              echo "Scanning Docker image with Trivy..."
+              trivy image --severity HIGH,CRITICAL --format json -o trivy-image-report.json $FULL_IMAGE
+            '''
+    }
+}
+
 
         stage('Push to Artifact Registry') {
             steps {
